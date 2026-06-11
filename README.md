@@ -115,20 +115,21 @@ Commands:
   closing marker line, of a multiline conversation. On compact inline notes, it
   expands the note to multiline and adds `@me`. Elsewhere, it keeps the normal
   new-line behavior. This command has no default keybinding.
-- `Markdown Review: Toggle OK` toggles approval. On compact inline notes, it
-  expands the note to multiline and adds `@me ok`. In multiline
-  conversations, it removes a trailing `@me ok` line or appends one. Outside a
-  conversation, it creates a compact `@me ok` note, with `{==...==}` around a
-  selection when present.
+- `Markdown Review: Add Quick Comment` adds a bare human reply. Outside a
+  conversation, it creates a compact `<!-- @  -->` note, with `{==...==}`
+  around a selection when present. Inside an inline conversation, it appends
+  `@ ` before the closing marker. Inside a multiline conversation, it inserts
+  a new `@ ` line before the closing marker.
 - `Markdown Review: Add OK Reply` adds a trailing `@me ok` reply without
   toggling it off when it already exists.
 - `Markdown Review: Remove OK Reply` removes a trailing `@me ok` reply without
   adding one when it is absent.
-- `Markdown Review: Create or Toggle Compact Review Note` creates compact
-  notes outside conversations. With a selection it writes
-  `{==selection==}<!-- @me  -->` or `{==selection==}{?? @me  ??}` according
-  to `dzMdReview.commentSyntax`. In one-message conversations, it toggles
-  between compact and multiline forms.
+- `Markdown Review: Create Multiline Quick Comment or Toggle Conversation
+  Layout` creates multiline `<!-- ... -->` quick comments outside
+  conversations. With a selection it writes
+  `{==selection==}<!--\n@ \n-->`. Inside conversations, it toggles between
+  inline and multiline forms. When compacting, it joins distinct review
+  messages with spaces but preserves continuation lines inside each message.
 - `Markdown Review: Create Review Discussion` creates a compact
   `{?? @me  ??}` discussion note regardless of `dzMdReview.commentSyntax`.
 - `Markdown Review: Add Review Addition` wraps the selection with
@@ -161,8 +162,9 @@ Commands:
 
 Default macOS shortcuts:
 
-- `cmd+alt+enter`: toggle `ok`.
-- `cmd+alt+shift+enter`: create or toggle compact review note.
+- `cmd+alt+enter`: add quick `@ ` comment.
+- `cmd+alt+shift+enter`: create a multiline quick comment or toggle
+  conversation layout.
 - `cmd+alt+k a`: add custom review addition.
 - `cmd+alt+k s`: add custom review deletion.
 - `cmd+alt+k r`: add custom review substitution.

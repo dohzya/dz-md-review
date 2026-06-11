@@ -222,13 +222,34 @@ test("cmd+enter expands a compact HTML note and adds @me", async () => {
   assert.deepEqual(editor.selection.active, { line: 2, character: 4 });
 });
 
-test("cmd+alt+enter appends ok inline in a compact inline note", async () => {
+test("cmd+alt+enter appends a quick reply inline in a compact inline note", async () => {
   const harness = createHarness();
   const editor = harness.createEditor("foo {?? @agent note inline ??} baz", { line: 0, character: 8 });
 
   await harness.api.approveAgentMessage();
 
-  assert.equal(editor.document.text, "foo {?? @agent note inline @me ok ??} baz");
+  assert.equal(editor.document.text, "foo {?? @agent note inline @  ??} baz");
+  assert.deepEqual(editor.selection.active, { line: 0, character: 29 });
+});
+
+test("cmd+alt+enter appends a quick reply inline in a compact HTML note", async () => {
+  const harness = createHarness();
+  const editor = harness.createEditor("foo <!-- @agent note inline --> baz", { line: 0, character: 9 });
+
+  await harness.api.approveAgentMessage();
+
+  assert.equal(editor.document.text, "foo <!-- @agent note inline @  --> baz");
+  assert.deepEqual(editor.selection.active, { line: 0, character: 30 });
+});
+
+test("cmd+alt+enter reuses a trailing inline quick reply", async () => {
+  const harness = createHarness();
+  const editor = harness.createEditor("{?? @agent note @  ??}", { line: 0, character: 5 });
+
+  await harness.api.approveAgentMessage();
+
+  assert.equal(editor.document.text, "{?? @agent note @  ??}");
+  assert.deepEqual(editor.selection.active, { line: 0, character: 19 });
 });
 
 test("addHumanOk only adds ok and removeHumanOk only removes ok", async () => {
@@ -248,40 +269,54 @@ test("addHumanOk only adds ok and removeHumanOk only removes ok", async () => {
   assert.equal(editor.document.text, "{?? @agent note ??}");
 });
 
-test("compact inline notes in list items keep inline ok replies", async () => {
+test("compact inline notes in list items keep inline quick replies", async () => {
   const harness = createHarness();
   const editor = harness.createEditor("- B {?? @agent note ??}", { line: 0, character: 8 });
 
   await harness.api.approveAgentMessage();
 
-  assert.equal(editor.document.text, "- B {?? @agent note @me ok ??}");
+  assert.equal(editor.document.text, "- B {?? @agent note @  ??}");
+  assert.deepEqual(editor.selection.active, { line: 0, character: 22 });
 });
 
-test("cmd+alt+enter removes a trailing @me ok line", async () => {
+test("cmd+alt+enter appends a quick reply after a trailing @me ok line", async () => {
   const harness = createHarness();
   const editor = harness.createEditor("<!--\n@agent note\n@me ok\n-->", { line: 3, character: 0 });
 
   await harness.api.approveAgentMessage();
 
-  assert.equal(editor.document.text, "<!--\n@agent note\n-->");
+  assert.equal(editor.document.text, "<!--\n@agent note\n@me ok\n@ \n-->");
+  assert.deepEqual(editor.selection.active, { line: 3, character: 2 });
 });
 
-test("cmd+alt+enter removes a trailing colonless @me ok line", async () => {
+test("cmd+alt+enter preserves colonless @me ok lines and appends a quick reply", async () => {
   const harness = createHarness();
   const editor = harness.createEditor("<!--\n@agent note\n@me ok\n-->", { line: 3, character: 0 });
 
   await harness.api.approveAgentMessage();
 
-  assert.equal(editor.document.text, "<!--\n@agent note\n-->");
+  assert.equal(editor.document.text, "<!--\n@agent note\n@me ok\n@ \n-->");
+  assert.deepEqual(editor.selection.active, { line: 3, character: 2 });
 });
 
-test("cmd+alt+enter adds @me ok when the conversation does not end with ok", async () => {
+test("cmd+alt+enter adds a quick reply when the conversation does not end with ok", async () => {
   const harness = createHarness();
   const editor = harness.createEditor("<!--\n@agent note\n@me question\n-->", { line: 3, character: 0 });
 
   await harness.api.approveAgentMessage();
 
-  assert.equal(editor.document.text, "<!--\n@agent note\n@me question\n@me ok\n-->");
+  assert.equal(editor.document.text, "<!--\n@agent note\n@me question\n@ \n-->");
+  assert.deepEqual(editor.selection.active, { line: 3, character: 2 });
+});
+
+test("cmd+alt+enter reuses a trailing multiline quick reply", async () => {
+  const harness = createHarness();
+  const editor = harness.createEditor("<!--\n@agent note\n@ \n-->", { line: 3, character: 0 });
+
+  await harness.api.approveAgentMessage();
+
+  assert.equal(editor.document.text, "<!--\n@agent note\n@ \n-->");
+  assert.deepEqual(editor.selection.active, { line: 2, character: 2 });
 });
 
 test("cmd+enter delegates to native newline away from the end of a conversation", async () => {
@@ -386,45 +421,54 @@ test("native-newline fallback leaves a blank line after the last message untouch
   );
 });
 
-test("cmd+alt+shift+enter creates a compact HTML note at the end of the line", async () => {
+test("cmd+alt+enter creates a compact HTML quick note at the end of the line", async () => {
   const harness = createHarness();
-  harness.setCommentSyntax("html");
+  const editor = harness.createEditor("foo", { line: 0, character: 1 });
+
+  await harness.api.approveAgentMessage();
+
+  assert.equal(editor.document.text, "foo <!-- @  -->");
+  assert.deepEqual(editor.selection.active, { line: 0, character: 11 });
+});
+
+test("cmd+alt+shift+enter creates a multiline HTML quick note at the end of the line", async () => {
+  const harness = createHarness();
+  harness.setCommentSyntax("custom");
   const editor = harness.createEditor("foo", { line: 0, character: 1 });
 
   await harness.api.createCompactReviewNote();
 
-  assert.equal(editor.document.text, "foo <!-- @me  -->");
-  assert.deepEqual(editor.selection.active, { line: 0, character: 13 });
+  assert.equal(editor.document.text, "foo <!--\n@ \n-->");
+  assert.deepEqual(editor.selection.active, { line: 1, character: 2 });
 });
 
-test("cmd+alt+shift+enter creates a compact custom note for selected text", async () => {
+test("cmd+alt+shift+enter creates a multiline HTML quick note for selected text", async () => {
   const harness = createHarness();
   harness.setCommentSyntax("custom");
   const editor = harness.createEditor("foo bar baz", { line: 0, character: 4 }, { line: 0, character: 7 });
 
   await harness.api.createCompactReviewNote();
 
-  assert.equal(editor.document.text, "foo {==bar==}{?? @me  ??} baz");
-  assert.deepEqual(editor.selection.active, { line: 0, character: 21 });
+  assert.equal(editor.document.text, "foo {==bar==}<!--\n@ \n--> baz");
+  assert.deepEqual(editor.selection.active, { line: 1, character: 2 });
 });
 
-test("compact custom notes are inserted without a leading space", async () => {
+test("cmd+alt+shift+enter creates an indented multiline quick note in list items", async () => {
   const harness = createHarness();
-  harness.setCommentSyntax("custom");
-  const editor = harness.createEditor("{++foo++}", { line: 0, character: 5 });
+  const editor = harness.createEditor("- item", { line: 0, character: 6 });
 
   await harness.api.createCompactReviewNote();
 
-  assert.equal(editor.document.text, "{++foo++}{?? @me  ??}");
-  assert.deepEqual(editor.selection.active, { line: 0, character: 17 });
+  assert.equal(editor.document.text, "- item <!--\n  @ \n  -->");
+  assert.deepEqual(editor.selection.active, { line: 1, character: 4 });
 });
 
-test("compact custom ok notes are inserted without a leading space", async () => {
+test("cmd+alt+k o compact custom ok notes are inserted without a leading space", async () => {
   const harness = createHarness();
   harness.setCommentSyntax("custom");
   const editor = harness.createEditor("{++foo++}", { line: 0, character: 5 });
 
-  await harness.api.approveAgentMessage();
+  await harness.api.addHumanOk();
 
   assert.equal(editor.document.text, "{++foo++}{?? @me ok ??}");
 });
@@ -538,6 +582,19 @@ test("cmd+alt+shift+enter expands a one-message compact conversation", async () 
   assert.deepEqual(editor.selection.active, { line: 1, character: 11 });
 });
 
+test("cmd+alt+shift+enter preserves inline continuation lines while toggling", async () => {
+  const harness = createHarness();
+  const editor = harness.createEditor("<!-- @ Bla\n  - Bla -->", { line: 0, character: 5 });
+
+  await harness.api.createCompactReviewNote();
+
+  assert.equal(editor.document.text, "<!--\n@ Bla\n  - Bla\n-->");
+
+  await harness.api.createCompactReviewNote();
+
+  assert.equal(editor.document.text, "<!-- @ Bla\n  - Bla -->");
+});
+
 test("cmd+alt+shift+enter expands a multi-message compact conversation", async () => {
   const harness = createHarness();
   const editor = harness.createEditor("{?? @agent note @me question ??}", { line: 0, character: 5 });
@@ -557,22 +614,36 @@ test("cmd+alt+shift+enter compacts a multi-message multiline conversation", asyn
   assert.equal(editor.document.text, "{?? @agent note @me question ??}");
 });
 
-test("cmd+alt+enter appends ok inline in a compact conversation", async () => {
+test("cmd+alt+shift+enter compacts continuation lines without flattening them", async () => {
+  const harness = createHarness();
+  const editor = harness.createEditor(
+    "{??\n@agent note\nsuite de la note\n@me question\n??}",
+    { line: 1, character: 0 },
+  );
+
+  await harness.api.createCompactReviewNote();
+
+  assert.equal(editor.document.text, "{?? @agent note\nsuite de la note @me question ??}");
+});
+
+test("cmd+alt+enter appends a quick reply inline in a compact conversation", async () => {
   const harness = createHarness();
   const editor = harness.createEditor("{?? @agent note ??}", { line: 0, character: 5 });
 
   await harness.api.approveAgentMessage();
 
-  assert.equal(editor.document.text, "{?? @agent note @me ok ??}");
+  assert.equal(editor.document.text, "{?? @agent note @  ??}");
+  assert.deepEqual(editor.selection.active, { line: 0, character: 18 });
 });
 
-test("cmd+alt+enter removes a trailing inline ok reply", async () => {
+test("cmd+alt+enter preserves a trailing inline ok reply and appends a quick reply", async () => {
   const harness = createHarness();
   const editor = harness.createEditor("{?? @agent note @me ok ??}", { line: 0, character: 5 });
 
   await harness.api.approveAgentMessage();
 
-  assert.equal(editor.document.text, "{?? @agent note ??}");
+  assert.equal(editor.document.text, "{?? @agent note @me ok @  ??}");
+  assert.deepEqual(editor.selection.active, { line: 0, character: 25 });
 });
 
 test("moves between custom review annotations and review conversations", () => {

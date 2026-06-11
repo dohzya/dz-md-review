@@ -143,27 +143,23 @@ async function approveAgentMessage(): Promise<void> {
   const conversation = findCurrentConversation(conversations, offset);
 
   if (!conversation) {
-    await createCompactHumanNote(editor, "ok");
+    await createCompactQuickHumanNote(editor);
     return;
   }
 
-  const removal = getTrailingHumanOkRemoval(conversation);
-  if (removal) {
-    await editor.edit((edit) => {
-      edit.delete(new vscode.Range(
-        editor.document.positionAt(conversation.start + removal.start),
-        editor.document.positionAt(conversation.start + removal.end),
-      ));
-    });
+  const trailingQuickReply = getTrailingQuickHumanReply(conversation);
+  if (trailingQuickReply) {
+    const position = editor.document.positionAt(conversation.start + trailingQuickReply.bodyStart);
+    editor.selection = new vscode.Selection(position, position);
     return;
   }
 
   if (isInlineConversation(conversation.raw)) {
-    await appendInlineHumanOk(editor, conversation);
+    await appendInlineQuickHumanReply(editor, conversation);
     return;
   }
 
-  await insertHumanComment("ok");
+  await insertQuickHumanComment();
 }
 
 async function addHumanOk(): Promise<void> {
@@ -240,7 +236,26 @@ async function addHumanComment(): Promise<void> {
 }
 
 async function createCompactReviewNote(): Promise<void> {
-  await createCompactReviewNoteWithMarkers(getPreferredReviewMarkers());
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return;
+  }
+
+  const conversations = collectConversations(editor.document.getText());
+  const offset = editor.document.offsetAt(editor.selection.active);
+  const conversation = findCurrentConversation(conversations, offset);
+
+  if (!conversation) {
+    await createMultilineQuickHumanConversation(editor);
+    return;
+  }
+
+  if (isInlineConversation(conversation.raw)) {
+    await expandInlineConversation(editor, conversation, undefined);
+    return;
+  }
+
+  await compactConversation(editor, conversation);
 }
 
 async function createCompactCriticMarkupReviewNote(): Promise<void> {
@@ -369,6 +384,33 @@ async function insertHumanComment(body: string): Promise<void> {
   }
 }
 
+async function insertQuickHumanComment(): Promise<void> {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor) {
+    return;
+  }
+
+  const conversations = collectConversations(editor.document.getText());
+  const offset = editor.document.offsetAt(editor.selection.active);
+  const conversation = findCurrentConversation(conversations, offset);
+
+  if (!conversation) {
+    await createMultilineQuickHumanConversation(editor);
+    return;
+  }
+
+  const insertion = buildQuickHumanCommentInsertion(conversation);
+  const insertOffset = conversation.start + insertion.offset;
+  const insertPosition = editor.document.positionAt(insertOffset);
+
+  await editor.edit((edit) => {
+    edit.insert(insertPosition, insertion.text);
+  });
+
+  const position = editor.document.positionAt(insertOffset + insertion.cursorOffset);
+  editor.selection = new vscode.Selection(position, position);
+}
+
 async function createMarkedConversation(editor: vscode.TextEditor, body: string): Promise<void> {
   const selection = editor.selection;
   const selectedText = editor.document.getText(selection);
@@ -428,6 +470,88 @@ async function createCompactHumanNote(
   });
 
   const cursor = editor.document.positionAt(editor.document.offsetAt(position) + prefix.length + cursorOffset);
+  editor.selection = new vscode.Selection(cursor, cursor);
+}
+
+async function createCompactQuickHumanNote(editor: vscode.TextEditor): Promise<void> {
+  const selection = editor.selection;
+  const selectedText = editor.document.getText(selection);
+  const markers = { open: HTML_REVIEW_OPEN, close: HTML_REVIEW_CLOSE };
+  const message = "@ ";
+  const compactNote = `${markers.open} ${message} ${markers.close}`;
+  const anchor = selectedText.length > 0 ? `{==${selectedText}==}` : "";
+  const text = `${anchor}${compactNote}`;
+  const cursorOffset = `${anchor}${markers.open} ${message}`.length;
+
+  if (selectedText.length > 0) {
+    await editor.edit((edit) => {
+      edit.replace(selection, text);
+    });
+    const cursor = editor.document.positionAt(editor.document.offsetAt(selection.start) + cursorOffset);
+    editor.selection = new vscode.Selection(cursor, cursor);
+    return;
+  }
+
+  const line = editor.document.lineAt(selection.active.line);
+  const position = line.range.end;
+  const prefix = line.text.length > 0 && !/[ \t]$/.test(line.text) ? " " : "";
+
+  await editor.edit((edit) => {
+    edit.insert(position, `${prefix}${compactNote}`);
+  });
+
+  const cursor = editor.document.positionAt(editor.document.offsetAt(position) + prefix.length + cursorOffset);
+  editor.selection = new vscode.Selection(cursor, cursor);
+}
+
+async function createMultilineQuickHumanConversation(editor: vscode.TextEditor): Promise<void> {
+  const selection = editor.selection;
+  const selectedText = editor.document.getText(selection);
+  const markers = { open: HTML_REVIEW_OPEN, close: HTML_REVIEW_CLOSE };
+
+  if (selectedText.length > 0) {
+    const endLine = editor.document.lineAt(selection.end.line);
+    const bodyIndent = getReviewBodyIndent(endLine.text);
+    const block = `{==${selectedText}==}${markers.open}\n${bodyIndent}@ \n${bodyIndent}${markers.close}`;
+    const cursorOffset = `{==${selectedText}==}${markers.open}\n${bodyIndent}@ `.length;
+
+    await editor.edit((edit) => {
+      edit.replace(selection, block);
+    });
+    const cursor = editor.document.positionAt(editor.document.offsetAt(selection.start) + cursorOffset);
+    editor.selection = new vscode.Selection(cursor, cursor);
+    return;
+  }
+
+  const line = editor.document.lineAt(selection.active.line);
+  const lineText = line.text;
+  const baseIndent = lineText.match(/^[ \t]*/)?.[0] ?? "";
+  const bodyIndent = getReviewBodyIndent(lineText);
+  const block = `${markers.open}\n${bodyIndent}@ \n${bodyIndent}${markers.close}`;
+  let cursorOffset = `${markers.open}\n${bodyIndent}@ `.length;
+
+  if (/^[ \t]*$/.test(lineText)) {
+    const text = `${baseIndent}${block}`;
+    cursorOffset += baseIndent.length;
+
+    await editor.edit((edit) => {
+      edit.replace(line.range, text);
+    });
+    const cursor = editor.document.positionAt(editor.document.offsetAt(line.range.start) + cursorOffset);
+    editor.selection = new vscode.Selection(cursor, cursor);
+    return;
+  }
+
+  const position = line.range.end;
+  const prefix = lineText.length > 0 && !/[ \t]$/.test(lineText) ? " " : "";
+  const text = `${prefix}${block}`;
+  cursorOffset += prefix.length;
+
+  await editor.edit((edit) => {
+    edit.insert(position, text);
+  });
+
+  const cursor = editor.document.positionAt(editor.document.offsetAt(position) + cursorOffset);
   editor.selection = new vscode.Selection(cursor, cursor);
 }
 
@@ -748,6 +872,35 @@ function buildHumanCommentInsertion(
   };
 }
 
+function buildQuickHumanCommentInsertion(
+  conversation: Conversation,
+): { offset: number; text: string; cursorOffset: number } {
+  const closeMarker = getConversationCloseMarker(conversation.raw);
+  const closeIndex = conversation.raw.lastIndexOf(closeMarker);
+  const beforeClose = conversation.raw.slice(0, closeIndex);
+  const lastReviewLine = [...beforeClose.matchAll(/^([ \t]*)@(agent|me)?(?=\s*:|\s|$).*$/gm)].pop();
+  const indent = lastReviewLine?.[1] ?? "";
+  const closeLineStart = beforeClose.lastIndexOf("\n") + 1;
+  const beforeCloseLine = conversation.raw.slice(closeLineStart, closeIndex);
+  const line = `${indent}@ \n`;
+  const cursorInLine = `${indent}@ `.length;
+
+  if (/^[ \t]*$/.test(beforeCloseLine)) {
+    return {
+      offset: closeLineStart,
+      text: line,
+      cursorOffset: cursorInLine,
+    };
+  }
+
+  const prefix = beforeClose.endsWith("\n") ? "" : "\n";
+  return {
+    offset: closeIndex,
+    text: `${prefix}${line}`,
+    cursorOffset: prefix.length + cursorInLine,
+  };
+}
+
 async function fillReviewLineAfterNativeNewline(
   event: vscode.TextDocumentChangeEvent,
   editor: vscode.TextEditor,
@@ -809,6 +962,24 @@ async function appendInlineHumanOk(
   await editor.edit((edit) => {
     edit.insert(editor.document.positionAt(insertOffset), `${prefix}@me ok `);
   });
+}
+
+async function appendInlineQuickHumanReply(
+  editor: vscode.TextEditor,
+  conversation: Conversation,
+): Promise<void> {
+  const closeStart = getConversationCloseStart(conversation.raw);
+  const beforeClose = conversation.raw.slice(0, closeStart);
+  const prefix = /[ \t\r\n]$/.test(beforeClose) ? "" : " ";
+  const insertOffset = conversation.start + closeStart;
+  const insertion = `${prefix}@  `;
+
+  await editor.edit((edit) => {
+    edit.insert(editor.document.positionAt(insertOffset), insertion);
+  });
+
+  const cursor = editor.document.positionAt(insertOffset + prefix.length + "@ ".length);
+  editor.selection = new vscode.Selection(cursor, cursor);
 }
 
 async function compactConversation(
@@ -1146,10 +1317,15 @@ function getTrailingHumanOkRemoval(conversation: Conversation): { start: number;
   return { start, end };
 }
 
+function getTrailingQuickHumanReply(conversation: Conversation): ReviewLine | undefined {
+  const lastLine = findLastReviewLine(conversation.raw);
+  return lastLine?.marker === "@" && lastLine.body.trim() === "" ? lastLine : undefined;
+}
+
 function formatReviewLine(raw: string, line: ReviewLine): string {
   const markerStart = getReviewLineMarkerStart(line);
   const prefix = raw.slice(markerStart, line.bodyStart).trimEnd();
-  const body = line.body.trim().replace(/\s+/g, " ");
+  const body = line.body.trimEnd();
   return body.length > 0 ? `${prefix} ${body}` : `${prefix} `;
 }
 
@@ -1181,5 +1357,9 @@ function getConversationContent(raw: string): string {
 }
 
 function isInlineConversation(raw: string): boolean {
-  return !/\r?\n/.test(raw);
+  return !isMultilineConversation(raw);
+}
+
+function isMultilineConversation(raw: string): boolean {
+  return /^(?:<!--|\{\?\?)[ \t]*\r?\n/.test(raw);
 }

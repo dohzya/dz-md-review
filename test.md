@@ -15,6 +15,24 @@ Une ligne de texte <!--
 
 Les rôles durables acceptés sont `@agent` et `@me`.
 
+## Commentaires rapides
+
+Une note rapide inline <!-- @  --> créée par `cmd+alt+enter`.
+
+Une note rapide multiligne créée par `cmd+alt+shift+enter` :
+
+<!--
+@
+-->
+
+- Dans une liste
+  <!--
+  @
+  -->
+
+Dans une conversation inline <!-- @agent note @  -->, `cmd+alt+enter` ajoute
+un nouveau `@ ` avant la fin.
+
 - A
 - B <!--
   @agent note sur un élément d'une liste

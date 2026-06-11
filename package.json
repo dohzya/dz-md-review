@@ -77,7 +77,7 @@
     "commands": [
       {
         "command": "dzMdReview.approveAgentMessage",
-        "title": "Toggle OK",
+        "title": "Add Quick Comment",
         "category": "Markdown Review"
       },
       {
@@ -122,7 +122,7 @@
       },
       {
         "command": "dzMdReview.createCompactReviewNote",
-        "title": "Create or Toggle Compact Review Note",
+        "title": "Create Multiline Quick Comment or Toggle Conversation Layout",
         "category": "Markdown Review"
       },
       {
