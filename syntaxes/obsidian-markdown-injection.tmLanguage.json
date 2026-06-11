@@ -1,0 +1,220 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "scopeName": "source.obsidian.markdown.injection",
+  "injectionSelector": "L:text.html.markdown",
+  "patterns": [
+    {
+      "include": "#obsidian-comments"
+    },
+    {
+      "include": "#criticmarkup-substitution"
+    },
+    {
+      "include": "#criticmarkup-addition"
+    },
+    {
+      "include": "#criticmarkup-deletion"
+    },
+    {
+      "include": "#criticmarkup-highlight"
+    },
+    {
+      "include": "#criticmarkup-comment"
+    },
+    {
+      "include": "#obsidian-embeds"
+    },
+    {
+      "include": "#obsidian-wikilinks"
+    },
+    {
+      "include": "#obsidian-callouts"
+    },
+    {
+      "include": "#obsidian-tags"
+    },
+    {
+      "include": "#obsidian-blockrefs"
+    },
+    {
+      "include": "#obsidian-highlights"
+    }
+  ],
+  "repository": {
+    "obsidian-comments": {
+      "patterns": [
+        {
+          "name": "comment.block.obsidian.markdown",
+          "match": "%%[^\\n]*?%%"
+        },
+        {
+          "name": "comment.block.obsidian.markdown",
+          "begin": "^\\s*%%\\s*$",
+          "end": "^\\s*%%\\s*$"
+        }
+      ]
+    },
+    "obsidian-embeds": {
+      "name": "markup.underline.link.image.obsidian.markdown",
+      "begin": "(!)\\[\\[",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.embed.obsidian.markdown"
+        }
+      },
+      "end": "\\]\\]",
+      "patterns": [
+        {
+          "include": "#obsidian-link-pipe"
+        },
+        {
+          "include": "#obsidian-heading-anchor"
+        },
+        {
+          "include": "#obsidian-block-anchor"
+        }
+      ]
+    },
+    "obsidian-wikilinks": {
+      "name": "markup.underline.link.obsidian.markdown",
+      "begin": "\\[\\[",
+      "end": "\\]\\]",
+      "patterns": [
+        {
+          "include": "#obsidian-link-pipe"
+        },
+        {
+          "include": "#obsidian-heading-anchor"
+        },
+        {
+          "include": "#obsidian-block-anchor"
+        }
+      ]
+    },
+    "obsidian-link-pipe": {
+      "name": "punctuation.separator.alias.obsidian.markdown",
+      "match": "\\|"
+    },
+    "obsidian-heading-anchor": {
+      "name": "entity.name.section.heading-anchor.obsidian.markdown",
+      "match": "#[^\\]|^#]+"
+    },
+    "obsidian-block-anchor": {
+      "name": "entity.name.section.block-anchor.obsidian.markdown",
+      "match": "\\^[A-Za-z0-9_-]+"
+    },
+    "obsidian-callouts": {
+      "name": "markup.quote.callout.obsidian.markdown",
+      "match": "^\\s*>\\s*\\[!([A-Za-z][A-Za-z0-9_-]*)\\]([+-])?([^\\n]*)",
+      "captures": {
+        "1": {
+          "name": "storage.type.callout.obsidian.markdown"
+        },
+        "2": {
+          "name": "keyword.operator.fold.callout.obsidian.markdown"
+        },
+        "3": {
+          "name": "markup.heading.callout.title.obsidian.markdown"
+        }
+      }
+    },
+    "obsidian-tags": {
+      "name": "entity.name.tag.obsidian.markdown",
+      "match": "(?<![\\w/])#[A-Za-zÀ-ÖØ-öø-ÿ0-9][A-Za-zÀ-ÖØ-öø-ÿ0-9_/-]*"
+    },
+    "obsidian-blockrefs": {
+      "name": "entity.name.section.block-reference.obsidian.markdown",
+      "match": "(?<![A-Za-z0-9_-])\\^[A-Za-z0-9_-]+"
+    },
+    "obsidian-highlights": {
+      "name": "markup.marked.obsidian.markdown",
+      "begin": "==",
+      "end": "==|$",
+      "patterns": [
+        {
+          "include": "#obsidian-wikilinks"
+        },
+        {
+          "include": "#obsidian-tags"
+        }
+      ]
+    },
+    "criticmarkup-addition": {
+      "name": "markup.inserted.critic.markdown",
+      "begin": "\\{\\+\\+",
+      "end": "\\+\\+\\}",
+      "patterns": [
+        {
+          "include": "#obsidian-wikilinks"
+        },
+        {
+          "include": "#obsidian-tags"
+        },
+        {
+          "include": "#obsidian-highlights"
+        }
+      ]
+    },
+    "criticmarkup-deletion": {
+      "name": "markup.deleted.critic.markdown",
+      "begin": "\\{--",
+      "end": "--\\}",
+      "patterns": [
+        {
+          "include": "#obsidian-wikilinks"
+        },
+        {
+          "include": "#obsidian-tags"
+        }
+      ]
+    },
+    "criticmarkup-substitution": {
+      "name": "meta.substitution.critic.markdown",
+      "begin": "(\\{~~)(.*?)(~>)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.substitution.begin.critic.markdown"
+        },
+        "2": {
+          "name": "markup.deleted.critic.substitution.markdown"
+        },
+        "3": {
+          "name": "punctuation.separator.substitution.critic.markdown"
+        }
+      },
+      "end": "~~\\}",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.substitution.end.critic.markdown"
+        }
+      },
+      "contentName": "markup.inserted.critic.substitution.markdown"
+    },
+    "criticmarkup-highlight": {
+      "name": "markup.marked.critic.markdown",
+      "begin": "\\{==",
+      "end": "==\\}",
+      "patterns": [
+        {
+          "include": "#obsidian-wikilinks"
+        },
+        {
+          "include": "#obsidian-tags"
+        }
+      ]
+    },
+    "criticmarkup-comment": {
+      "name": "comment.block.critic.markdown",
+      "begin": "\\{>>",
+      "end": "<<\\}",
+      "patterns": [
+        {
+          "include": "#obsidian-wikilinks"
+        },
+        {
+          "include": "#obsidian-tags"
+        }
+      ]
+    }
+  }
+}

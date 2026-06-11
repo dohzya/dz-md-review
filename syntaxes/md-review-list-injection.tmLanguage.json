@@ -1,0 +1,129 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "scopeName": "source.dz-md-review.list.injection",
+  "injectionSelector": "L:text.html.markdown",
+  "patterns": [
+    {
+      "include": "#md-review-conversation"
+    },
+    {
+      "include": "#md-review-custom-conversation"
+    }
+  ],
+  "repository": {
+    "md-review-conversation": {
+      "name": "comment.block.md-review.markdown",
+      "begin": "<!--(?=(?:(?!-->)[\\s\\S])*\\s*@(agent|me)?(?=\\s*:|\\s|$))",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment.begin.md-review.markdown"
+        }
+      },
+      "end": "-->",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment.end.md-review.markdown"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#md-review-agent-inline"
+        },
+        {
+          "include": "#md-review-human-inline"
+        },
+        {
+          "include": "#md-review-human-quick-inline"
+        },
+        {
+          "include": "#md-review-agent-line"
+        },
+        {
+          "include": "#md-review-human-line"
+        },
+        {
+          "include": "#md-review-human-quick-line"
+        }
+      ]
+    },
+    "md-review-custom-conversation": {
+      "name": "comment.block.md-review.markdown",
+      "begin": "\\{\\?\\?(?=(?:(?!\\?\\?\\})[\\s\\S])*\\s*@(agent|me)?(?=\\s*:|\\s|$))",
+      "beginCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment.begin.md-review.markdown"
+        }
+      },
+      "end": "\\?\\?\\}",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.comment.end.md-review.markdown"
+        }
+      },
+      "patterns": [
+        {
+          "include": "#md-review-agent-inline"
+        },
+        {
+          "include": "#md-review-human-inline"
+        },
+        {
+          "include": "#md-review-human-quick-inline"
+        },
+        {
+          "include": "#md-review-agent-line"
+        },
+        {
+          "include": "#md-review-human-line"
+        },
+        {
+          "include": "#md-review-human-quick-line"
+        }
+      ]
+    },
+    "md-review-agent-inline": {
+      "name": "comment.line.md-review.agent.markdown",
+      "match": "(@agent)(?=\\s*:|\\s|$)",
+      "captures": {
+        "1": {
+          "name": "storage.type.role.md-review.agent.markdown"
+        }
+      }
+    },
+    "md-review-human-inline": {
+      "name": "comment.line.md-review.human.markdown",
+      "match": "(@me)(?=\\s*:|\\s|$)",
+      "captures": {
+        "1": {
+          "name": "storage.type.role.md-review.human.markdown"
+        }
+      }
+    },
+    "md-review-human-quick-inline": {
+      "name": "comment.line.md-review.human.quick.markdown",
+      "match": "(@)(?=\\s(?!agent\\b|me\\b)|$)"
+    },
+    "md-review-agent-line": {
+      "name": "comment.line.md-review.agent.markdown",
+      "match": "^\\s*(@agent)(?=\\s*:|\\s|$).*$",
+      "captures": {
+        "1": {
+          "name": "storage.type.role.md-review.agent.markdown"
+        }
+      }
+    },
+    "md-review-human-line": {
+      "name": "comment.line.md-review.human.markdown",
+      "match": "^\\s*(@me)(?=\\s*:|\\s|$).*$",
+      "captures": {
+        "1": {
+          "name": "storage.type.role.md-review.human.markdown"
+        }
+      }
+    },
+    "md-review-human-quick-line": {
+      "name": "comment.line.md-review.human.quick.markdown",
+      "match": "^\\s*@(?!(agent|me)\\b).*$"
+    }
+  }
+}

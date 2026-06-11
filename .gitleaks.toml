@@ -1,0 +1,8 @@
+[allowlist]
+description = "Ignore VS Code keybinding literals that look like generic keys."
+paths = [
+  '''package\.json''',
+]
+regexes = [
+  '''cmd\+alt\+shift\+enter''',
+]
