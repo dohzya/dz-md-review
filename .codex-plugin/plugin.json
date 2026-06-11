@@ -1,0 +1,31 @@
+{
+  "name": "dz-md-review-syntax",
+  "version": "0.0.1",
+  "description": "Markdown review workflow support for inline discussions and custom review annotations.",
+  "author": {
+    "name": "Etienne VALLETTE d'OSIA"
+  },
+  "keywords": [
+    "markdown",
+    "review",
+    "custom-annotations",
+    "obsidian"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "DZ Markdown Review Syntax",
+    "shortDescription": "Markdown review discussions",
+    "longDescription": "Use DZ Markdown Review Syntax to annotate Markdown, reply to inline review conversations, and clean resolved discussion blocks.",
+    "developerName": "Etienne VALLETTE d'OSIA",
+    "category": "Productivity",
+    "capabilities": [
+      "Review",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Review this Markdown with inline discussion blocks.",
+      "Resolve validated Markdown review comments."
+    ],
+    "brandColor": "#3B82F6"
+  }
+}

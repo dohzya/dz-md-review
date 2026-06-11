@@ -1,0 +1,7 @@
+interface:
+  display_name: "Markdown Review Workflow"
+  short_description: "Inline Markdown review conversations"
+  default_prompt: "Use $markdown-review-workflow to review and resolve inline Markdown discussion blocks."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,7 +1,7 @@
 {
   "name": "dz-md-review-syntax",
   "displayName": "DZ Markdown Review Syntax",
-  "description": "Adds role-aware Markdown review comments, Obsidian syntax, and CriticMarkup highlighting to VS Code Markdown.",
+  "description": "Adds role-aware Markdown review comments, Obsidian syntax, and custom review annotation highlighting to VS Code Markdown.",
   "version": "0.0.1",
   "publisher": "local",
   "main": "./out/extension.js",
@@ -97,27 +97,27 @@
       },
       {
         "command": "dzMdReview.addCriticMarkupAddition",
-        "title": "Add CriticMarkup Addition",
+        "title": "Add Review Addition",
         "category": "Markdown Review"
       },
       {
         "command": "dzMdReview.addCriticMarkupDeletion",
-        "title": "Add CriticMarkup Deletion",
+        "title": "Add Review Deletion",
         "category": "Markdown Review"
       },
       {
         "command": "dzMdReview.addCriticMarkupSubstitution",
-        "title": "Add CriticMarkup Substitution",
+        "title": "Add Review Substitution",
         "category": "Markdown Review"
       },
       {
         "command": "dzMdReview.addCriticMarkupHighlight",
-        "title": "Add CriticMarkup Highlight",
+        "title": "Add Review Highlight",
         "category": "Markdown Review"
       },
       {
         "command": "dzMdReview.addCriticMarkupComment",
-        "title": "Add CriticMarkup Comment",
+        "title": "Add Review Comment",
         "category": "Markdown Review"
       },
       {
@@ -127,17 +127,17 @@
       },
       {
         "command": "dzMdReview.createCriticMarkupDiscussion",
-        "title": "Create CriticMarkup Discussion",
+        "title": "Create Review Discussion",
         "category": "Markdown Review"
       },
       {
         "command": "dzMdReview.cancelCriticMarkupAnnotation",
-        "title": "Cancel CriticMarkup Annotation",
+        "title": "Cancel Review Annotation",
         "category": "Markdown Review"
       },
       {
         "command": "dzMdReview.applyCriticMarkupAnnotation",
-        "title": "Apply CriticMarkup Annotation",
+        "title": "Apply Review Annotation",
         "category": "Markdown Review"
       },
       {
@@ -173,10 +173,10 @@
           "type": "string",
           "enum": [
             "html",
-            "criticmarkup-like"
+            "custom"
           ],
           "default": "html",
-          "description": "Syntax used when creating new review conversations. Existing conversations in supported syntaxes remain supported."
+          "description": "Syntax used when creating new review conversations. Use custom for {?? ??} blocks. Existing conversations in supported syntaxes remain supported."
         }
       }
     },

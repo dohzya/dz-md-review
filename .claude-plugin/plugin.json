@@ -1,0 +1,14 @@
+{
+  "name": "dz-md-review-syntax",
+  "version": "0.0.1",
+  "description": "Markdown review workflow support for inline discussions and custom review annotations.",
+  "author": {
+    "name": "Etienne VALLETTE d'OSIA"
+  },
+  "keywords": [
+    "markdown",
+    "review",
+    "custom-annotations",
+    "obsidian"
+  ]
+}

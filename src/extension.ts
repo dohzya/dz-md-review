@@ -310,7 +310,7 @@ async function resolveCriticMarkupAnnotation(resolution: CriticMarkupResolution)
   const annotation = findCurrentCriticMarkupAnnotation(text, offset);
 
   if (!annotation) {
-    void vscode.window.showInformationMessage("No CriticMarkup annotation at cursor.");
+    void vscode.window.showInformationMessage("No review annotation at cursor.");
     return;
   }
 
@@ -380,10 +380,10 @@ async function createMarkedConversation(editor: vscode.TextEditor, body: string)
 
   const endLine = editor.document.lineAt(selection.end.line);
   const bodyIndent = getReviewBodyIndent(endLine.text);
-  const messageLine = body === "" ? `${bodyIndent}@me: ` : `${bodyIndent}@me: ${body}`;
+  const messageLine = body === "" ? `${bodyIndent}@me ` : `${bodyIndent}@me ${body}`;
   const markers = getPreferredReviewMarkers();
   const block = `{==${selectedText}==}${markers.open}\n${messageLine}\n${bodyIndent}${markers.close}`;
-  const cursorOffset = `{==${selectedText}==}${markers.open}\n${bodyIndent}@me: `.length;
+  const cursorOffset = `{==${selectedText}==}${markers.open}\n${bodyIndent}@me `.length;
 
   await editor.edit((edit) => {
     edit.replace(selection, block);
@@ -402,7 +402,7 @@ async function createCompactHumanNote(
 ): Promise<void> {
   const selection = editor.selection;
   const selectedText = editor.document.getText(selection);
-  const message = body === "" ? "@me: " : `@me: ${body}`;
+  const message = body === "" ? "@me " : `@me ${body}`;
   const compactNote = `${markers.open} ${message} ${markers.close}`;
   const anchor = selectedText.length > 0 ? `{==${selectedText}==}` : "";
   const text = `${anchor}${compactNote}`;
@@ -541,10 +541,10 @@ async function createHumanConversation(
   const lineText = line.text;
   const baseIndent = lineText.match(/^[ \t]*/)?.[0] ?? "";
   const bodyIndent = getReviewBodyIndent(lineText);
-  const messageLine = body === "" ? `${bodyIndent}@me: ` : `${bodyIndent}@me: ${body}`;
+  const messageLine = body === "" ? `${bodyIndent}@me ` : `${bodyIndent}@me ${body}`;
   const markers = getPreferredReviewMarkers();
   const block = `${markers.open}\n${messageLine}\n${bodyIndent}${markers.close}`;
-  let cursorOffset = `${markers.open}\n${bodyIndent}@me: `.length;
+  let cursorOffset = `${markers.open}\n${bodyIndent}@me `.length;
 
   if (/^[ \t]*$/.test(lineText)) {
     const text = `${baseIndent}${block}`;
@@ -729,8 +729,8 @@ function buildHumanCommentInsertion(
   const indent = lastReviewLine?.[1] ?? "";
   const closeLineStart = beforeClose.lastIndexOf("\n") + 1;
   const beforeCloseLine = conversation.raw.slice(closeLineStart, closeIndex);
-  const line = body === "" ? `${indent}@me: \n` : `${indent}@me: ${body}\n`;
-  const cursorInLine = `${indent}@me: `.length;
+  const line = body === "" ? `${indent}@me \n` : `${indent}@me ${body}\n`;
+  const cursorInLine = `${indent}@me `.length;
 
   if (/^[ \t]*$/.test(beforeCloseLine)) {
     return {
@@ -775,7 +775,7 @@ async function expandInlineConversation(
   let cursorOffset: number | undefined = lines.join("\n").length;
 
   if (humanBody !== undefined) {
-    const humanLine = humanBody === "" ? `${indent}@me: ` : `${indent}@me: ${humanBody}`;
+    const humanLine = humanBody === "" ? `${indent}@me ` : `${indent}@me ${humanBody}`;
     lines.push(humanLine);
     cursorOffset = lines.join("\n").length;
   }
@@ -807,7 +807,7 @@ async function appendInlineHumanOk(
   const insertOffset = conversation.start + closeStart;
 
   await editor.edit((edit) => {
-    edit.insert(editor.document.positionAt(insertOffset), `${prefix}@me: ok `);
+    edit.insert(editor.document.positionAt(insertOffset), `${prefix}@me ok `);
   });
 }
 
@@ -1153,13 +1153,13 @@ function formatReviewLine(raw: string, line: ReviewLine): string {
   return body.length > 0 ? `${prefix} ${body}` : `${prefix} `;
 }
 
-function getPreferredCommentSyntax(): "html" | "criticmarkup-like" {
+function getPreferredCommentSyntax(): "html" | "custom" {
   const value = vscode.workspace.getConfiguration("dzMdReview").get<string>("commentSyntax");
-  return value === "criticmarkup-like" ? "criticmarkup-like" : "html";
+  return value === "custom" || value === "criticmarkup-like" ? "custom" : "html";
 }
 
 function getPreferredReviewMarkers(): { open: string; close: string } {
-  return getPreferredCommentSyntax() === "criticmarkup-like"
+  return getPreferredCommentSyntax() === "custom"
     ? { open: CRITICMARKUP_REVIEW_OPEN, close: CRITICMARKUP_REVIEW_CLOSE }
     : { open: HTML_REVIEW_OPEN, close: HTML_REVIEW_CLOSE };
 }

@@ -11,7 +11,7 @@ function readPackage() {
   return JSON.parse(fs.readFileSync(path.join(__dirname, "..", "package.json"), "utf8"));
 }
 
-test("global list fallback starts HTML and criticmarkup-like conversations", () => {
+test("global list fallback starts HTML and custom conversations", () => {
   const grammar = readGrammar("md-review-list-injection.tmLanguage.json");
 
   assert.equal(grammar.injectionSelector, "L:text.html.markdown");
@@ -69,7 +69,7 @@ test("comment marker colors target review and native HTML punctuation scopes", (
   ]);
 });
 
-test("Obsidian Markdown grammar includes Obsidian and CriticMarkup scopes", () => {
+test("Obsidian Markdown grammar includes Obsidian and custom review annotation scopes", () => {
   const grammar = readGrammar("obsidian-markdown-injection.tmLanguage.json");
 
   assert.equal(

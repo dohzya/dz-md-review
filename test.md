@@ -3,74 +3,74 @@
 ## Conversation
 
 <!--
-@agent: note isolée
+@agent note isolée
 -->
 
 Une ligne de texte <!--
-@agent: note ou justificatif
-@me: remarque ou question
-@agent: réponse de l'agent
-@ message rapide qui sera converti en `@me: ` par l'agent
+@agent note ou justificatif
+@me remarque ou question
+@agent réponse de l'agent
+@ message rapide qui sera converti en `@me ` par l'agent
 -->
 
 Les rôles durables acceptés sont `@agent` et `@me`.
 
 - A
 - B <!--
-  @agent: note sur un élément d'une liste
+  @agent note sur un élément d'une liste
   -->
 
 - A
   <!--
-  @agent: Note sur un élément, à la ligne
+  @agent Note sur un élément, à la ligne
   -->
 
 ### Entête <!--
-@agent: note sur une entête
+@agent note sur une entête
 @ remarque
 -->
 
 ## Conversation sur sélection
 
 Le passage {==sélectionné pour revue==}<!--
-@me: commentaire lié à la sélection en syntaxe HTML par défaut
+@me commentaire lié à la sélection en syntaxe HTML par défaut
 -->
 
 ### Entête avec {==sélection==}<!--
-@me: commentaire lié à une sélection dans une entête
+@me commentaire lié à une sélection dans une entête
 -->
 
 - Item avec {==sélection==}<!--
-  @me: commentaire lié à une sélection dans une liste
+  @me commentaire lié à une sélection dans une liste
   -->
 
-## Syntaxe criticmarkup-like
+## Syntaxe custom
 
 {??
-@agent: note isolée avec la syntaxe alternative
-@me: remarque ou question
-@agent: réponse de l'agent
+@agent note isolée avec la syntaxe alternative
+@me remarque ou question
+@agent réponse de l'agent
 ??}
 
 Une ligne de texte {??
-@agent: note inline avec la syntaxe alternative
-@me: remarque ou question
+@agent note inline avec la syntaxe alternative
+@me remarque ou question
 ??}
 
-Une note compacte {?? @agent: note inline compacte ??} à déplier avec une commande.
+Une note compacte {?? @agent note inline compacte ??} à déplier avec une commande.
 
 Le passage {==sélectionné pour revue==}{??
-@me: commentaire lié à la sélection en syntaxe alternative
+@me commentaire lié à la sélection en syntaxe alternative
 ??} reste lisible dans la ligne.
 
 - A
 - B {??
-  @agent: note criticmarkup-like sur un élément d'une liste
-  @me: réponse humaine
+  @agent note custom sur un élément d'une liste
+  @me réponse humaine
   ??}
 
 - Item avec {==sélection==}{??
-  @me: commentaire lié à une sélection dans une liste
+  @me commentaire lié à une sélection dans une liste
   ??}
 
 ## Conversation résolue
@@ -124,7 +124,7 @@ sur plusieurs lignes.
 > [!tip]+ Callout ouvert
 > Contenu du callout.
 
-## CriticMarkup
+## Custom Review Annotations
 
 Addition : {++texte ajouté++}
 

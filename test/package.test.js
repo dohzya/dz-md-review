@@ -27,7 +27,7 @@ test("Obsidian Markdown support injects into Markdown without a test language", 
   assert.equal(pkg.contributes.languages, undefined);
 });
 
-test("Catppuccin Latte defaults color Obsidian and CriticMarkup scopes", () => {
+test("Catppuccin Latte defaults color Obsidian and custom review annotation scopes", () => {
   const pkg = readPackage();
   const customizations = pkg.contributes.configurationDefaults["editor.tokenColorCustomizations"];
   const globalRules = customizations.textMateRules;
@@ -52,7 +52,7 @@ test("Catppuccin Latte defaults color Obsidian and CriticMarkup scopes", () => {
   assert(latteRules.some((rule) => rule.scope.includes("comment.block.obsidian.markdown")));
 });
 
-test("CriticMarkup commands are available through cmd+alt+k chords", () => {
+test("custom review annotation commands are available through cmd+alt+k chords", () => {
   const pkg = readPackage();
   const commands = new Set(pkg.contributes.commands.map((command) => command.command));
   const keybindings = new Map(pkg.contributes.keybindings.map((binding) => [binding.command, binding.mac]));
