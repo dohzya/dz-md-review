@@ -159,9 +159,13 @@ Commands:
   conversation.
 - `Markdown Review: Go to Previous Conversation` moves to the previous review
   conversation.
+- `Markdown Review: Toggle Review Mode` enables a modal review pass for the
+  active Markdown editor. While it is active, the status bar shows `Review` and
+  single-key review shortcuts are enabled. Use `escape` to leave the mode.
 
 Default macOS shortcuts:
 
+- `cmd+alt+k m`: toggle review mode.
 - `cmd+alt+enter`: add quick `@ ` comment.
 - `cmd+alt+shift+enter`: create a multiline quick comment or toggle
   conversation layout.
@@ -180,3 +184,13 @@ Default macOS shortcuts:
 - `cmd+alt+backspace`: delete conversation.
 - `cmd+alt+down`: next conversation.
 - `cmd+alt+up`: previous conversation.
+
+Review mode shortcuts:
+
+- `n`: next custom review annotation or review conversation.
+- `shift+n`: previous custom review annotation or review conversation.
+- `x`: cancel custom review annotation.
+- `shift+x`: apply custom review annotation.
+- `o`: add `@me ok`.
+- `@`: add quick `@ ` comment.
+- `escape`: exit review mode.

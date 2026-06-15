@@ -37,17 +37,22 @@ let agentDecorationType: vscode.TextEditorDecorationType | undefined;
 let humanDecorationType: vscode.TextEditorDecorationType | undefined;
 let quickHumanDecorationType: vscode.TextEditorDecorationType | undefined;
 let okDecorationType: vscode.TextEditorDecorationType | undefined;
+let reviewModeEnabled = false;
+let reviewModeStatusBarItem: vscode.StatusBarItem | undefined;
 
 const REVIEW_BLOCK_RE =
   /<!--[\s\S]*?-->|\{\?\?[\s\S]*?\?\?\}/g;
 const CRITICMARKUP_ANNOTATION_RE =
   /\{\+\+[\s\S]*?\+\+\}|\{--[\s\S]*?--\}|\{==[\s\S]*?==\}|\{>>[\s\S]*?<<\}|\{\?\?[\s\S]*?\?\?\}|\{~~[\s\S]*?~>[\s\S]*?~~\}/g;
+const REVIEW_RESOLUTION_RE =
+  /<!--[\s\S]*?-->|\{\+\+[\s\S]*?\+\+\}|\{--[\s\S]*?--\}|\{==[\s\S]*?==\}|\{>>[\s\S]*?<<\}|\{\?\?[\s\S]*?\?\?\}|\{~~[\s\S]*?~>[\s\S]*?~~\}/g;
 
 const REVIEW_MARKER_RE = /(^|[ \t\r\n])(@agent|@me|@)(?=[ \t]*:|[ \t\r\n]|$)/g;
 const HTML_REVIEW_OPEN = "<!--";
 const HTML_REVIEW_CLOSE = "-->";
 const CRITICMARKUP_REVIEW_OPEN = "{??";
 const CRITICMARKUP_REVIEW_CLOSE = "??}";
+const REVIEW_MODE_CONTEXT = "dzMdReview.inReviewMode";
 const CATPPUCCIN_LATTE_BLUE = "#1E66F5";
 const CATPPUCCIN_LATTE_PEACH = "#FE640B";
 const CATPPUCCIN_LATTE_OVERLAY1 = "#8C8FA1";
@@ -82,6 +87,10 @@ export function activate(context: vscode.ExtensionContext): void {
   okDecorationType = vscode.window.createTextEditorDecorationType({
     fontWeight: "bold",
   });
+  reviewModeStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+  reviewModeStatusBarItem.text = "$(comment-discussion) Review";
+  reviewModeStatusBarItem.tooltip = "Markdown Review Mode";
+  reviewModeStatusBarItem.command = "dzMdReview.toggleReviewMode";
 
   context.subscriptions.push(
     conversationDecorationType,
@@ -91,6 +100,10 @@ export function activate(context: vscode.ExtensionContext): void {
     humanDecorationType,
     quickHumanDecorationType,
     okDecorationType,
+    reviewModeStatusBarItem,
+    vscode.commands.registerCommand("dzMdReview.toggleReviewMode", toggleReviewMode),
+    vscode.commands.registerCommand("dzMdReview.enterReviewMode", enterReviewMode),
+    vscode.commands.registerCommand("dzMdReview.exitReviewMode", exitReviewMode),
     vscode.commands.registerCommand("dzMdReview.approveAgentMessage", approveAgentMessage),
     vscode.commands.registerCommand("dzMdReview.addHumanComment", addHumanComment),
     vscode.commands.registerCommand("dzMdReview.addHumanOk", addHumanOk),
@@ -125,11 +138,43 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
 
+  void setReviewMode(false);
   updateConversationDecorations(vscode.window.activeTextEditor);
 }
 
 export function deactivate(): void {
   // Nothing to dispose manually; subscriptions are owned by VS Code.
+}
+
+async function toggleReviewMode(): Promise<void> {
+  await setReviewMode(!reviewModeEnabled);
+}
+
+async function enterReviewMode(): Promise<void> {
+  await setReviewMode(true);
+}
+
+async function exitReviewMode(): Promise<void> {
+  await setReviewMode(false);
+}
+
+async function setReviewMode(enabled: boolean): Promise<void> {
+  reviewModeEnabled = enabled;
+  updateReviewModeStatus(enabled);
+  await vscode.commands.executeCommand("setContext", REVIEW_MODE_CONTEXT, enabled);
+}
+
+function updateReviewModeStatus(enabled: boolean): void {
+  if (!reviewModeStatusBarItem) {
+    return;
+  }
+
+  if (enabled) {
+    reviewModeStatusBarItem.show();
+    return;
+  }
+
+  reviewModeStatusBarItem.hide();
 }
 
 async function approveAgentMessage(): Promise<void> {
@@ -592,7 +637,7 @@ function findCurrentCriticMarkupAnnotation(
   text: string,
   offset: number,
 ): { start: number; end: number; cancel: string; apply: string } | undefined {
-  const candidates = [...text.matchAll(CRITICMARKUP_ANNOTATION_RE)]
+  const candidates = [...text.matchAll(REVIEW_RESOLUTION_RE)]
     .map((match) => {
       const raw = match[0];
       const start = match.index ?? 0;
@@ -620,6 +665,10 @@ function findCurrentCriticMarkupAnnotation(
 }
 
 function getCriticMarkupReplacement(raw: string): { cancel: string; apply: string } | undefined {
+  if (raw.startsWith("<!--") && raw.endsWith("-->")) {
+    return collectReviewRoles(raw).length > 0 ? { cancel: "", apply: "" } : undefined;
+  }
+
   if (raw.startsWith("{++") && raw.endsWith("++}")) {
     return { cancel: "", apply: raw.slice(3, -3) };
   }

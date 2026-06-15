@@ -83,3 +83,49 @@ test("custom review annotation commands are available through cmd+alt+k chords",
   assert.equal(keybindings.get("dzMdReview.nextReviewBlock"), "cmd+alt+k n");
   assert.equal(keybindings.get("dzMdReview.previousReviewBlock"), "cmd+alt+k shift+n");
 });
+
+test("review mode exposes modal single-key shortcuts behind a context", () => {
+  const pkg = readPackage();
+  const commands = new Set(pkg.contributes.commands.map((command) => command.command));
+  const keybindings = new Map(pkg.contributes.keybindings.map((binding) => [
+    `${binding.command}:${binding.mac}`,
+    binding.when,
+  ]));
+
+  assert(commands.has("dzMdReview.toggleReviewMode"));
+  assert(commands.has("dzMdReview.enterReviewMode"));
+  assert(commands.has("dzMdReview.exitReviewMode"));
+
+  assert.equal(
+    keybindings.get("dzMdReview.toggleReviewMode:cmd+alt+k m"),
+    "editorTextFocus && editorLangId == markdown",
+  );
+  assert.equal(
+    keybindings.get("dzMdReview.exitReviewMode:escape"),
+    "editorTextFocus && editorLangId == markdown && dzMdReview.inReviewMode",
+  );
+  assert.equal(
+    keybindings.get("dzMdReview.nextReviewBlock:n"),
+    "editorTextFocus && editorLangId == markdown && dzMdReview.inReviewMode",
+  );
+  assert.equal(
+    keybindings.get("dzMdReview.previousReviewBlock:shift+n"),
+    "editorTextFocus && editorLangId == markdown && dzMdReview.inReviewMode",
+  );
+  assert.equal(
+    keybindings.get("dzMdReview.cancelCriticMarkupAnnotation:x"),
+    "editorTextFocus && editorLangId == markdown && dzMdReview.inReviewMode && !editorReadonly",
+  );
+  assert.equal(
+    keybindings.get("dzMdReview.applyCriticMarkupAnnotation:shift+x"),
+    "editorTextFocus && editorLangId == markdown && dzMdReview.inReviewMode && !editorReadonly",
+  );
+  assert.equal(
+    keybindings.get("dzMdReview.addHumanOk:o"),
+    "editorTextFocus && editorLangId == markdown && dzMdReview.inReviewMode && !editorReadonly",
+  );
+  assert.equal(
+    keybindings.get("dzMdReview.approveAgentMessage:@"),
+    "editorTextFocus && editorLangId == markdown && dzMdReview.inReviewMode && !editorReadonly",
+  );
+});

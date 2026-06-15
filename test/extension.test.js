@@ -28,12 +28,30 @@ function positionAt(text, offset) {
 
 function createHarness() {
   let commentSyntax = "html";
+  let deferSetContext = false;
   const executedCommands = [];
+  const executedCommandCalls = [];
+  const pendingSetContextResolutions = [];
+  const statusBarCalls = [];
   const mockVscode = {
     window: {
       activeTextEditor: undefined,
       createTextEditorDecorationType() {
         return {};
+      },
+      createStatusBarItem() {
+        return {
+          command: undefined,
+          text: "",
+          tooltip: "",
+          dispose() {},
+          hide() {
+            statusBarCalls.push("hide");
+          },
+          show() {
+            statusBarCalls.push("show");
+          },
+        };
       },
       onDidChangeActiveTextEditor() {
         return {};
@@ -56,8 +74,15 @@ function createHarness() {
       registerCommand() {
         return {};
       },
-      executeCommand(command) {
+      executeCommand(command, ...args) {
         executedCommands.push(command);
+        executedCommandCalls.push([command, ...args]);
+        if (command === "setContext" && deferSetContext) {
+          return new Promise((resolve) => {
+            pendingSetContextResolutions.push(resolve);
+          });
+        }
+
         return Promise.resolve();
       },
     },
@@ -68,6 +93,9 @@ function createHarness() {
     },
     OverviewRulerLane: {
       Right: 1,
+    },
+    StatusBarAlignment: {
+      Left: 1,
     },
     Range: class Range {
       constructor(start, endOrStartCharacter, endLine, endCharacter) {
@@ -94,7 +122,7 @@ function createHarness() {
   };
   const module = { exports: {} };
   const source = fs.readFileSync(path.join(__dirname, "..", "out", "extension.js"), "utf8")
-    + "\nmodule.exports.__test = { addHumanComment, addHumanOk, applyCriticMarkupAnnotation, approveAgentMessage, cancelCriticMarkupAnnotation, collectConversations, createCompactCriticMarkupReviewNote, createCompactReviewNote, createReviewConversation, fillReviewLineAfterNativeNewline, getConversationContentRanges, getConversationMarkerRanges, getConversationOkRanges, getConversationRoleRanges, moveToReviewBlock, removeHumanOk, wrapCriticMarkupAnnotation };";
+    + "\nmodule.exports.__test = { activate: module.exports.activate, addHumanComment, addHumanOk, applyCriticMarkupAnnotation, approveAgentMessage, cancelCriticMarkupAnnotation, collectConversations, createCompactCriticMarkupReviewNote, createCompactReviewNote, createReviewConversation, exitReviewMode, fillReviewLineAfterNativeNewline, getConversationContentRanges, getConversationMarkerRanges, getConversationOkRanges, getConversationRoleRanges, moveToReviewBlock, removeHumanOk, toggleReviewMode, wrapCriticMarkupAnnotation };";
 
   vm.runInNewContext(source, {
     require(name) {
@@ -171,12 +199,54 @@ function createHarness() {
   return {
     api: module.exports.__test,
     createEditor,
+    executedCommandCalls,
     executedCommands,
+    resolveSetContexts() {
+      for (const resolve of pendingSetContextResolutions.splice(0)) {
+        resolve();
+      }
+    },
     setCommentSyntax(value) {
       commentSyntax = value;
     },
+    setDeferSetContext(value) {
+      deferSetContext = value;
+    },
+    statusBarCalls,
   };
 }
+
+test("review mode toggles the VS Code keybinding context", async () => {
+  const harness = createHarness();
+
+  await harness.api.toggleReviewMode();
+  await harness.api.toggleReviewMode();
+
+  assert.deepEqual(harness.executedCommandCalls, [
+    ["setContext", "dzMdReview.inReviewMode", true],
+    ["setContext", "dzMdReview.inReviewMode", false],
+  ]);
+});
+
+test("review mode hides its status bar item immediately on exit", async () => {
+  const harness = createHarness();
+
+  harness.api.activate({ subscriptions: [], extensionUri: "extension-uri" });
+  await Promise.resolve();
+  harness.statusBarCalls.length = 0;
+
+  await harness.api.toggleReviewMode();
+  assert.deepEqual(harness.statusBarCalls, ["show"]);
+
+  harness.setDeferSetContext(true);
+  const exitPromise = harness.api.exitReviewMode();
+  await Promise.resolve();
+
+  assert.deepEqual(harness.statusBarCalls, ["show", "hide"]);
+
+  harness.resolveSetContexts();
+  await exitPromise;
+});
 
 test("creates an HTML review conversation for selected text and places the cursor after @me", async () => {
   const harness = createHarness();
@@ -531,6 +601,8 @@ test("cancels custom review annotations", async () => {
     ["{>>bla<<}", ""],
     ["{~~foo~>bar~~}", "foo"],
     ["{??bla??}", ""],
+    ["<!-- @me bla -->", ""],
+    ["<!--\n@agent bla\n-->", ""],
   ];
 
   for (const [text, expected] of cases) {
@@ -541,6 +613,15 @@ test("cancels custom review annotations", async () => {
 
     assert.equal(editor.document.text, expected);
   }
+});
+
+test("cancel ignores plain HTML comments without review roles", async () => {
+  const harness = createHarness();
+  const editor = harness.createEditor("<!-- plain note -->", { line: 0, character: 5 });
+
+  await harness.api.cancelCriticMarkupAnnotation();
+
+  assert.equal(editor.document.text, "<!-- plain note -->");
 });
 
 test("applies custom review annotations", async () => {

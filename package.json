@@ -13,6 +13,9 @@
   ],
   "activationEvents": [
     "onLanguage:markdown",
+    "onCommand:dzMdReview.toggleReviewMode",
+    "onCommand:dzMdReview.enterReviewMode",
+    "onCommand:dzMdReview.exitReviewMode",
     "onCommand:dzMdReview.approveAgentMessage",
     "onCommand:dzMdReview.addHumanComment",
     "onCommand:dzMdReview.addHumanOk",
@@ -75,6 +78,21 @@
       }
     ],
     "commands": [
+      {
+        "command": "dzMdReview.toggleReviewMode",
+        "title": "Toggle Review Mode",
+        "category": "Markdown Review"
+      },
+      {
+        "command": "dzMdReview.enterReviewMode",
+        "title": "Enter Review Mode",
+        "category": "Markdown Review"
+      },
+      {
+        "command": "dzMdReview.exitReviewMode",
+        "title": "Exit Review Mode",
+        "category": "Markdown Review"
+      },
       {
         "command": "dzMdReview.approveAgentMessage",
         "title": "Add Quick Comment",
@@ -181,6 +199,54 @@
       }
     },
     "keybindings": [
+      {
+        "command": "dzMdReview.toggleReviewMode",
+        "key": "cmd+alt+k m",
+        "mac": "cmd+alt+k m",
+        "when": "editorTextFocus && editorLangId == markdown"
+      },
+      {
+        "command": "dzMdReview.exitReviewMode",
+        "key": "escape",
+        "mac": "escape",
+        "when": "editorTextFocus && editorLangId == markdown && dzMdReview.inReviewMode"
+      },
+      {
+        "command": "dzMdReview.nextReviewBlock",
+        "key": "n",
+        "mac": "n",
+        "when": "editorTextFocus && editorLangId == markdown && dzMdReview.inReviewMode"
+      },
+      {
+        "command": "dzMdReview.previousReviewBlock",
+        "key": "shift+n",
+        "mac": "shift+n",
+        "when": "editorTextFocus && editorLangId == markdown && dzMdReview.inReviewMode"
+      },
+      {
+        "command": "dzMdReview.cancelCriticMarkupAnnotation",
+        "key": "x",
+        "mac": "x",
+        "when": "editorTextFocus && editorLangId == markdown && dzMdReview.inReviewMode && !editorReadonly"
+      },
+      {
+        "command": "dzMdReview.applyCriticMarkupAnnotation",
+        "key": "shift+x",
+        "mac": "shift+x",
+        "when": "editorTextFocus && editorLangId == markdown && dzMdReview.inReviewMode && !editorReadonly"
+      },
+      {
+        "command": "dzMdReview.addHumanOk",
+        "key": "o",
+        "mac": "o",
+        "when": "editorTextFocus && editorLangId == markdown && dzMdReview.inReviewMode && !editorReadonly"
+      },
+      {
+        "command": "dzMdReview.approveAgentMessage",
+        "key": "@",
+        "mac": "@",
+        "when": "editorTextFocus && editorLangId == markdown && dzMdReview.inReviewMode && !editorReadonly"
+      },
       {
         "command": "dzMdReview.approveAgentMessage",
         "key": "cmd+alt+enter",
