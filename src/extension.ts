@@ -226,6 +226,12 @@ async function addHumanOk(): Promise<void> {
     return;
   }
 
+  const trailingEmptyHumanReply = getTrailingEmptyHumanReply(conversation);
+  if (trailingEmptyHumanReply) {
+    await fillTrailingEmptyHumanReply(editor, conversation, trailingEmptyHumanReply, "ok");
+    return;
+  }
+
   if (isInlineConversation(conversation.raw)) {
     await appendInlineHumanOk(editor, conversation);
     return;
@@ -1013,6 +1019,33 @@ async function appendInlineHumanOk(
   });
 }
 
+async function fillTrailingEmptyHumanReply(
+  editor: vscode.TextEditor,
+  conversation: Conversation,
+  line: ReviewLine,
+  body: string,
+): Promise<void> {
+  const markerStart = getReviewLineMarkerStart(line);
+  const lineStart = conversation.start + markerStart;
+  const lineEnd = conversation.start + line.end;
+  const prefix = conversation.raw.slice(markerStart, line.bodyStart).trimEnd();
+  const replacement = isInlineConversation(conversation.raw) ? `${prefix} ${body} ` : `${prefix} ${body}`;
+  const cursorOffset = lineStart + replacement.length;
+
+  await editor.edit((edit) => {
+    edit.replace(
+      new vscode.Range(
+        editor.document.positionAt(lineStart),
+        editor.document.positionAt(lineEnd),
+      ),
+      replacement,
+    );
+  });
+
+  const cursor = editor.document.positionAt(cursorOffset);
+  editor.selection = new vscode.Selection(cursor, cursor);
+}
+
 async function appendInlineQuickHumanReply(
   editor: vscode.TextEditor,
   conversation: Conversation,
@@ -1369,6 +1402,13 @@ function getTrailingHumanOkRemoval(conversation: Conversation): { start: number;
 function getTrailingQuickHumanReply(conversation: Conversation): ReviewLine | undefined {
   const lastLine = findLastReviewLine(conversation.raw);
   return lastLine?.marker === "@" && lastLine.body.trim() === "" ? lastLine : undefined;
+}
+
+function getTrailingEmptyHumanReply(conversation: Conversation): ReviewLine | undefined {
+  const lastLine = findLastReviewLine(conversation.raw);
+  return lastLine && (lastLine.marker === "@" || lastLine.marker === "@me") && lastLine.body.trim() === ""
+    ? lastLine
+    : undefined;
 }
 
 function formatReviewLine(raw: string, line: ReviewLine): string {

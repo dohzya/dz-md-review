@@ -339,6 +339,24 @@ test("addHumanOk only adds ok and removeHumanOk only removes ok", async () => {
   assert.equal(editor.document.text, "{?? @agent note ??}");
 });
 
+test("addHumanOk fills a trailing empty human reply", async () => {
+  const cases = [
+    ["{?? @agent note @  ??}", "{?? @agent note @ ok ??}"],
+    ["{?? @agent note @me  ??}", "{?? @agent note @me ok ??}"],
+    ["<!--\n@agent note\n@ \n-->", "<!--\n@agent note\n@ ok\n-->"],
+    ["<!--\n@agent note\n@me \n-->", "<!--\n@agent note\n@me ok\n-->"],
+  ];
+
+  for (const [text, expected] of cases) {
+    const harness = createHarness();
+    const editor = harness.createEditor(text, { line: 0, character: 5 });
+
+    await harness.api.addHumanOk();
+
+    assert.equal(editor.document.text, expected);
+  }
+});
+
 test("compact inline notes in list items keep inline quick replies", async () => {
   const harness = createHarness();
   const editor = harness.createEditor("- B {?? @agent note ??}", { line: 0, character: 8 });
